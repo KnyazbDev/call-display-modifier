@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const Database = require('better-sqlite3');
 const { v4: uuidv4 } = require('uuid');
+const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,35 +14,43 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Database setup
-const db = new Database('database.db');
+// JSON Database (simple file-based storage)
+const DB_FILE = path.join(__dirname, 'database.json');
 
-// Initialize database tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS clients (
-    id TEXT PRIMARY KEY,
-    device_id TEXT UNIQUE NOT NULL,
-    device_name TEXT,
-    registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+// Initialize database
+let db = {
+  clients: [],
+  rules: []
+};
 
-  CREATE TABLE IF NOT EXISTS rules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    client_id TEXT NOT NULL,
-    original_number TEXT NOT NULL,
-    display_number TEXT NOT NULL,
-    description TEXT,
-    enabled INTEGER DEFAULT 1,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE
-  );
+// Load database from file
+function loadDatabase() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const data = fs.readFileSync(DB_FILE, 'utf8');
+      db = JSON.parse(data);
+      console.log('✅ Database loaded');
+    } else {
+      saveDatabase();
+      console.log('✅ Database initialized');
+    }
+  } catch (error) {
+    console.error('Error loading database:', error);
+    db = { clients: [], rules: [] };
+  }
+}
 
-  CREATE INDEX IF NOT EXISTS idx_client_rules ON rules(client_id);
-  CREATE INDEX IF NOT EXISTS idx_original_number ON rules(original_number);
-`);
+// Save database to file
+function saveDatabase() {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+  } catch (error) {
+    console.error('Error saving database:', error);
+  }
+}
 
-console.log('✅ Database initialized');
+// Initialize
+loadDatabase();
 
 // ==========================================
 // API ENDPOINTS
@@ -66,21 +75,27 @@ app.post('/api/client/register', (req, res) => {
     }
 
     // Проверяем, есть ли уже клиент
-    const existing = db.prepare('SELECT id FROM clients WHERE device_id = ?').get(device_id);
+    const existing = db.clients.find(c => c.device_id === device_id);
     
     if (existing) {
       // Обновляем last_seen
-      db.prepare('UPDATE clients SET last_seen = CURRENT_TIMESTAMP WHERE id = ?').run(existing.id);
+      existing.last_seen = new Date().toISOString();
+      saveDatabase();
       return res.json({ client_id: existing.id, message: 'Client already registered' });
     }
 
     // Создаем нового клиента
     const client_id = uuidv4();
-    db.prepare('INSERT INTO clients (id, device_id, device_name) VALUES (?, ?, ?)').run(
-      client_id,
-      device_id,
-      device_name || 'Unknown Device'
-    );
+    const newClient = {
+      id: client_id,
+      device_id: device_id,
+      device_name: device_name || 'Unknown Device',
+      registered_at: new Date().toISOString(),
+      last_seen: new Date().toISOString()
+    };
+    
+    db.clients.push(newClient);
+    saveDatabase();
 
     res.json({ client_id, message: 'Client registered successfully' });
   } catch (error) {
@@ -95,15 +110,21 @@ app.get('/api/client/:client_id/rules', (req, res) => {
     const { client_id } = req.params;
 
     // Обновляем last_seen
-    db.prepare('UPDATE clients SET last_seen = CURRENT_TIMESTAMP WHERE id = ?').run(client_id);
+    const client = db.clients.find(c => c.id === client_id);
+    if (client) {
+      client.last_seen = new Date().toISOString();
+      saveDatabase();
+    }
 
     // Получаем активные правила
-    const rules = db.prepare(`
-      SELECT id, original_number, display_number, description
-      FROM rules
-      WHERE client_id = ? AND enabled = 1
-      ORDER BY created_at DESC
-    `).all(client_id);
+    const rules = db.rules
+      .filter(r => r.client_id === client_id && r.enabled === 1)
+      .map(r => ({
+        id: r.id,
+        original_number: r.original_number,
+        display_number: r.display_number,
+        description: r.description
+      }));
 
     res.json({ rules });
   } catch (error) {
@@ -117,12 +138,11 @@ app.get('/api/client/:client_id/rule/:number', (req, res) => {
   try {
     const { client_id, number } = req.params;
 
-    const rule = db.prepare(`
-      SELECT display_number, description
-      FROM rules
-      WHERE client_id = ? AND original_number = ? AND enabled = 1
-      LIMIT 1
-    `).get(client_id, number);
+    const rule = db.rules.find(r => 
+      r.client_id === client_id && 
+      r.original_number === number && 
+      r.enabled === 1
+    );
 
     if (rule) {
       res.json({ found: true, display_number: rule.display_number, description: rule.description });
@@ -142,19 +162,10 @@ app.get('/api/client/:client_id/rule/:number', (req, res) => {
 // Получить всех клиентов
 app.get('/api/admin/clients', (req, res) => {
   try {
-    const clients = db.prepare(`
-      SELECT 
-        c.id, 
-        c.device_id, 
-        c.device_name, 
-        c.registered_at, 
-        c.last_seen,
-        COUNT(r.id) as rules_count
-      FROM clients c
-      LEFT JOIN rules r ON c.id = r.client_id AND r.enabled = 1
-      GROUP BY c.id
-      ORDER BY c.last_seen DESC
-    `).all();
+    const clients = db.clients.map(c => ({
+      ...c,
+      rules_count: db.rules.filter(r => r.client_id === c.id && r.enabled === 1).length
+    })).sort((a, b) => new Date(b.last_seen) - new Date(a.last_seen));
 
     res.json({ clients });
   } catch (error) {
@@ -168,13 +179,15 @@ app.get('/api/admin/clients/:client_id', (req, res) => {
   try {
     const { client_id } = req.params;
     
-    const client = db.prepare('SELECT * FROM clients WHERE id = ?').get(client_id);
+    const client = db.clients.find(c => c.id === client_id);
     
     if (!client) {
       return res.status(404).json({ error: 'Client not found' });
     }
 
-    const rules = db.prepare('SELECT * FROM rules WHERE client_id = ? ORDER BY created_at DESC').all(client_id);
+    const rules = db.rules
+      .filter(r => r.client_id === client_id)
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     res.json({ client, rules });
   } catch (error) {
@@ -193,19 +206,27 @@ app.post('/api/admin/rules', (req, res) => {
     }
 
     // Проверяем, существует ли клиент
-    const client = db.prepare('SELECT id FROM clients WHERE id = ?').get(client_id);
+    const client = db.clients.find(c => c.id === client_id);
     if (!client) {
       return res.status(404).json({ error: 'Client not found' });
     }
 
     // Создаем правило
-    const result = db.prepare(`
-      INSERT INTO rules (client_id, original_number, display_number, description)
-      VALUES (?, ?, ?, ?)
-    `).run(client_id, original_number, display_number, description || '');
+    const newRule = {
+      id: db.rules.length > 0 ? Math.max(...db.rules.map(r => r.id)) + 1 : 1,
+      client_id: client_id,
+      original_number: original_number,
+      display_number: display_number,
+      description: description || '',
+      enabled: 1,
+      created_at: new Date().toISOString()
+    };
+    
+    db.rules.push(newRule);
+    saveDatabase();
 
     res.json({ 
-      id: result.lastInsertRowid, 
+      id: newRule.id, 
       message: 'Rule created successfully' 
     });
   } catch (error) {
@@ -244,9 +265,17 @@ app.put('/api/admin/rules/:rule_id', (req, res) => {
       return res.status(400).json({ error: 'No fields to update' });
     }
 
-    values.push(rule_id);
+    const rule = db.rules.find(r => r.id === parseInt(rule_id));
+    if (!rule) {
+      return res.status(404).json({ error: 'Rule not found' });
+    }
 
-    db.prepare(`UPDATE rules SET ${updates.join(', ')} WHERE id = ?`).run(...values);
+    if (original_number !== undefined) rule.original_number = original_number;
+    if (display_number !== undefined) rule.display_number = display_number;
+    if (description !== undefined) rule.description = description;
+    if (enabled !== undefined) rule.enabled = enabled ? 1 : 0;
+
+    saveDatabase();
 
     res.json({ message: 'Rule updated successfully' });
   } catch (error) {
@@ -260,7 +289,8 @@ app.delete('/api/admin/rules/:rule_id', (req, res) => {
   try {
     const { rule_id } = req.params;
 
-    db.prepare('DELETE FROM rules WHERE id = ?').run(rule_id);
+    db.rules = db.rules.filter(r => r.id !== parseInt(rule_id));
+    saveDatabase();
 
     res.json({ message: 'Rule deleted successfully' });
   } catch (error) {
@@ -274,7 +304,9 @@ app.delete('/api/admin/clients/:client_id', (req, res) => {
   try {
     const { client_id } = req.params;
 
-    db.prepare('DELETE FROM clients WHERE id = ?').run(client_id);
+    db.clients = db.clients.filter(c => c.id !== client_id);
+    db.rules = db.rules.filter(r => r.client_id !== client_id);
+    saveDatabase();
 
     res.json({ message: 'Client deleted successfully' });
   } catch (error) {
@@ -286,10 +318,13 @@ app.delete('/api/admin/clients/:client_id', (req, res) => {
 // Статистика
 app.get('/api/admin/stats', (req, res) => {
   try {
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    
     const stats = {
-      total_clients: db.prepare('SELECT COUNT(*) as count FROM clients').get().count,
-      active_clients: db.prepare('SELECT COUNT(*) as count FROM clients WHERE datetime(last_seen) > datetime("now", "-1 hour")').get().count,
-      total_rules: db.prepare('SELECT COUNT(*) as count FROM rules WHERE enabled = 1').get().count
+      total_clients: db.clients.length,
+      active_clients: db.clients.filter(c => new Date(c.last_seen) > oneHourAgo).length,
+      total_rules: db.rules.filter(r => r.enabled === 1).length
     };
 
     res.json(stats);
@@ -299,25 +334,79 @@ app.get('/api/admin/stats', (req, res) => {
   }
 });
 
+// Получить все IP адреса компьютера
+function getLocalIpAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // Пропускаем внутренние и non-IPv4 адреса
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push({
+          name: name,
+          address: iface.address
+        });
+      }
+    }
+  }
+  
+  return addresses;
+}
+
+// Endpoint для получения информации о сервере
+app.get('/api/server/info', (req, res) => {
+  const addresses = getLocalIpAddresses();
+  res.json({
+    port: PORT,
+    addresses: addresses,
+    urls: addresses.map(a => `http://${a.address}:${PORT}`)
+  });
+});
+
 // ==========================================
 // START SERVER
 // ==========================================
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
+  const addresses = getLocalIpAddresses();
+  
+  console.log('');
   console.log('==========================================');
-  console.log('  Call Display Modifier Server');
-  console.log('  Educational purposes only!');
+  console.log('  📱 Call Display Modifier Server');
+  console.log('  ⚠️  Educational purposes only!');
   console.log('==========================================');
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📊 Admin Panel: http://localhost:${PORT}`);
-  console.log(`📡 API: http://localhost:${PORT}/api`);
+  console.log('');
+  console.log('✅ Server successfully started!');
+  console.log('');
+  console.log('📊 Admin Panel (открыть на ЭТОМ ПК):');
+  console.log(`   http://localhost:${PORT}`);
+  console.log('');
+  
+  if (addresses.length > 0) {
+    console.log('📱 Для подключения с ТЕЛЕФОНА используйте:');
+    addresses.forEach(addr => {
+      console.log(`   http://${addr.address}:${PORT}  (${addr.name})`);
+    });
+    console.log('');
+    console.log('💡 Скопируйте один из адресов выше и');
+    console.log('   введите в Android приложении в поле "URL сервера"');
+  } else {
+    console.log('⚠️  Не найдены сетевые интерфейсы');
+    console.log('   Убедитесь, что компьютер подключен к WiFi');
+  }
+  
+  console.log('');
   console.log('==========================================');
+  console.log('');
+  console.log('Нажмите Ctrl+C для остановки сервера');
+  console.log('');
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
   console.log('\n👋 Shutting down server...');
-  db.close();
+  saveDatabase();
   process.exit(0);
 });
 

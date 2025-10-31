@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- Разрешаем HTTP для локальной разработки -->
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Локальные адреса -->
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">10.0.0.0</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        
+        <!-- Частные сети (192.168.x.x) -->
+        <domain includeSubdomains="true">192.168.0.0</domain>
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <domain includeSubdomains="true">192.168.1.100</domain>
+        <domain includeSubdomains="true">192.168.1.101</domain>
+        <domain includeSubdomains="true">192.168.1.102</domain>
+        <domain includeSubdomains="true">192.168.1.103</domain>
+        <domain includeSubdomains="true">192.168.1.104</domain>
+        <domain includeSubdomains="true">192.168.1.105</domain>
+    </domain-config>
+    
+    <!-- ВНИМАНИЕ: Для продакшена нужно использовать HTTPS! -->
+    <!-- Это только для локальной разработки и тестирования -->
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
+

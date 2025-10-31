@@ -5,6 +5,7 @@ let currentClientId = null;
 
 // Загрузка при старте
 document.addEventListener('DOMContentLoaded', () => {
+    loadServerInfo();
     loadStats();
     loadClients();
     
@@ -14,6 +15,41 @@ document.addEventListener('DOMContentLoaded', () => {
         loadClients();
     }, 30000);
 });
+
+// ==========================================
+// SERVER INFO
+// ==========================================
+
+async function loadServerInfo() {
+    try {
+        const response = await fetch(`${API_URL}/api/server/info`);
+        const data = await response.json();
+        
+        const serverInfo = document.getElementById('serverInfo');
+        const serverUrls = document.getElementById('serverUrls');
+        
+        if (data.urls && data.urls.length > 0) {
+            serverUrls.innerHTML = data.urls.map(url => `
+                <div class="server-url" onclick="copyToClipboard('${url}')">
+                    <span>${url}</span>
+                    <button class="copy-btn">📋 Копировать</button>
+                </div>
+            `).join('');
+            serverInfo.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error loading server info:', error);
+    }
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        alert('✅ URL скопирован в буфер обмена!\n\n' + text + '\n\nВставьте его в приложении на телефоне.');
+    }).catch(err => {
+        console.error('Error copying to clipboard:', err);
+        prompt('Скопируйте этот URL:', text);
+    });
+}
 
 // ==========================================
 // STATS
