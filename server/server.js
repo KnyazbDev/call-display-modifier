@@ -5,9 +5,12 @@ const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const http = require('http');
+const QRCode = require('qrcode');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+let PORT = process.env.PORT || 3000;
+let actualPort = PORT; // Реальный порт после запуска
 
 // Middleware
 app.use(cors());
@@ -357,55 +360,159 @@ function getLocalIpAddresses() {
 // Endpoint для получения информации о сервере
 app.get('/api/server/info', (req, res) => {
   const addresses = getLocalIpAddresses();
+  const primaryUrl = addresses.length > 0 ? `http://${addresses[0].address}:${actualPort}` : `http://localhost:${actualPort}`;
+  
   res.json({
-    port: PORT,
+    port: actualPort,
     addresses: addresses,
-    urls: addresses.map(a => `http://${a.address}:${PORT}`)
+    urls: addresses.map(a => `http://${a.address}:${actualPort}`),
+    primaryUrl: primaryUrl
   });
 });
+
+// Endpoint для получения QR кода
+app.get('/api/server/qrcode', async (req, res) => {
+  try {
+    const addresses = getLocalIpAddresses();
+    const url = addresses.length > 0 ? `http://${addresses[0].address}:${actualPort}` : `http://localhost:${actualPort}`;
+    
+    // Генерируем QR код как Data URL
+    const qrCode = await QRCode.toDataURL(url, {
+      width: 400,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+    
+    res.json({ qrCode, url });
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    res.status(500).json({ error: 'Failed to generate QR code' });
+  }
+});
+
+// Функция для поиска свободного порта
+function findFreePort(startPort) {
+  return new Promise((resolve, reject) => {
+    const server = http.createServer();
+    
+    server.listen(startPort, '0.0.0.0', () => {
+      const port = server.address().port;
+      server.close(() => {
+        resolve(port);
+      });
+    });
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        // Порт занят, пробуем следующий
+        resolve(findFreePort(startPort + 1));
+      } else {
+        reject(err);
+      }
+    });
+  });
+}
+
+// Функция для вывода большого баннера с URL
+function printBigBanner(url) {
+  const line = '═'.repeat(60);
+  console.log('');
+  console.log('╔' + line + '╗');
+  console.log('║' + ' '.repeat(60) + '║');
+  console.log('║' + centerText('📱 URL ДЛЯ ANDROID ПРИЛОЖЕНИЯ:', 60) + '║');
+  console.log('║' + ' '.repeat(60) + '║');
+  console.log('║' + centerText(url, 60) + '║');
+  console.log('║' + ' '.repeat(60) + '║');
+  console.log('╚' + line + '╝');
+  console.log('');
+}
+
+function centerText(text, width) {
+  const padding = Math.max(0, width - text.length);
+  const leftPad = Math.floor(padding / 2);
+  const rightPad = padding - leftPad;
+  return ' '.repeat(leftPad) + text + ' '.repeat(rightPad);
+}
 
 // ==========================================
 // START SERVER
 // ==========================================
 
-app.listen(PORT, '0.0.0.0', () => {
-  const addresses = getLocalIpAddresses();
-  
-  console.log('');
-  console.log('==========================================');
-  console.log('  📱 Call Display Modifier Server');
-  console.log('  ⚠️  Educational purposes only!');
-  console.log('==========================================');
-  console.log('');
-  console.log('✅ Server successfully started!');
-  console.log('');
-  console.log('📊 Admin Panel (открыть на ЭТОМ ПК):');
-  console.log(`   http://localhost:${PORT}`);
-  console.log('');
-  
-  if (addresses.length > 0) {
-    console.log('📱 Для подключения с ТЕЛЕФОНА используйте:');
-    addresses.forEach(addr => {
-      console.log(`   http://${addr.address}:${PORT}  (${addr.name})`);
+async function startServer() {
+  try {
+    // Ищем свободный порт
+    actualPort = await findFreePort(PORT);
+    
+    if (actualPort !== PORT) {
+      console.log(`⚠️  Порт ${PORT} занят, используется порт ${actualPort}`);
+    }
+    
+    app.listen(actualPort, '0.0.0.0', () => {
+      const addresses = getLocalIpAddresses();
+      
+      console.log('');
+      console.log('╔══════════════════════════════════════════════════════════╗');
+      console.log('║                                                          ║');
+      console.log('║          📱 Call Display Modifier Server 2.0            ║');
+      console.log('║          ⚠️  Educational purposes only!                  ║');
+      console.log('║                                                          ║');
+      console.log('╚══════════════════════════════════════════════════════════╝');
+      console.log('');
+      console.log('✅ Сервер успешно запущен!');
+      console.log(`🔌 Порт: ${actualPort}`);
+      console.log('');
+      
+      if (addresses.length > 0) {
+        const primaryUrl = `http://${addresses[0].address}:${actualPort}`;
+        
+        printBigBanner(primaryUrl);
+        
+        console.log('📊 Admin Panel (на ЭТОМ компьютере):');
+        console.log(`   🌐 http://localhost:${actualPort}`);
+        console.log('');
+        console.log('📱 Для Android приложения (все доступные адреса):');
+        addresses.forEach((addr, i) => {
+          const url = `http://${addr.address}:${actualPort}`;
+          console.log(`   ${i === 0 ? '👉' : '  '} ${url}  (${addr.name})`);
+        });
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+        console.log('💡 Инструкция:');
+        console.log('   1. Откройте Admin Panel в браузере');
+        console.log('   2. Отсканируйте QR код телефоном');
+        console.log('   3. Или скопируйте URL из рамки выше');
+        console.log('   4. Вставьте в Android приложении');
+        console.log('');
+        console.log('═══════════════════════════════════════════════════════════');
+        console.log('');
+        console.log('Нажмите Ctrl+C для остановки сервера');
+        console.log('');
+      } else {
+        console.log('⚠️  Сетевые интерфейсы не найдены');
+        console.log('   Проверьте подключение к WiFi/Ethernet');
+        console.log('');
+      }
     });
-    console.log('');
-    console.log('💡 Скопируйте один из адресов выше и');
-    console.log('   введите в Android приложении в поле "URL сервера"');
-  } else {
-    console.log('⚠️  Не найдены сетевые интерфейсы');
-    console.log('   Убедитесь, что компьютер подключен к WiFi');
+  } catch (error) {
+    console.error('❌ Ошибка запуска сервера:', error);
+    process.exit(1);
   }
-  
-  console.log('');
-  console.log('==========================================');
-  console.log('');
-  console.log('Нажмите Ctrl+C для остановки сервера');
-  console.log('');
-});
+}
+
+// Запускаем сервер
+startServer();
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n👋 Shutting down server...');
+  console.log('');
+  console.log('╔══════════════════════════════════════════════════════════╗');
+  console.log('║          👋 Остановка сервера...                        ║');
+  console.log('╚══════════════════════════════════════════════════════════╝');
+  console.log('');
   saveDatabase();
   process.exit(0);
 });

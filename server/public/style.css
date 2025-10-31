@@ -54,13 +54,60 @@ header h1 {
     padding: 20px;
     border-radius: 8px;
     margin-top: 20px;
-    text-align: left;
+    text-align: center;
 }
 
 .server-info h3 {
     color: #1976D2;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.server-info h4 {
+    color: #1976D2;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+/* QR Code Section */
+.qr-section {
+    margin-bottom: 30px;
+}
+
+.qr-code-container {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    display: inline-block;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     margin-bottom: 15px;
+}
+
+.qr-code-container img {
+    display: block;
+    max-width: 300px;
+    height: auto;
+}
+
+.qr-loading {
+    padding: 40px;
+    color: #666;
+}
+
+.qr-hint {
+    color: #1976D2;
     font-size: 16px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+/* URLs Section */
+.urls-section {
+    text-align: left;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 2px solid #90CAF9;
 }
 
 .server-url {

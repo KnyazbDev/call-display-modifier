@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadServerInfo() {
     try {
+        // Загружаем информацию о сервере
         const response = await fetch(`${API_URL}/api/server/info`);
         const data = await response.json();
         
@@ -29,16 +30,40 @@ async function loadServerInfo() {
         const serverUrls = document.getElementById('serverUrls');
         
         if (data.urls && data.urls.length > 0) {
-            serverUrls.innerHTML = data.urls.map(url => `
+            // Заполняем URLs
+            serverUrls.innerHTML = data.urls.map((url, index) => `
                 <div class="server-url" onclick="copyToClipboard('${url}')">
-                    <span>${url}</span>
+                    <span>${index === 0 ? '👉 ' : ''}${url}</span>
                     <button class="copy-btn">📋 Копировать</button>
                 </div>
             `).join('');
+            
             serverInfo.style.display = 'block';
+            
+            // Загружаем QR код
+            loadQRCode();
         }
     } catch (error) {
         console.error('Error loading server info:', error);
+    }
+}
+
+async function loadQRCode() {
+    try {
+        const response = await fetch(`${API_URL}/api/server/qrcode`);
+        const data = await response.json();
+        
+        const qrCode = document.getElementById('qrCode');
+        const qrLoading = document.getElementById('qrLoading');
+        
+        if (data.qrCode) {
+            qrCode.src = data.qrCode;
+            qrCode.style.display = 'block';
+            qrLoading.style.display = 'none';
+        }
+    } catch (error) {
+        console.error('Error loading QR code:', error);
+        document.getElementById('qrLoading').textContent = 'Ошибка генерации QR кода';
     }
 }
 

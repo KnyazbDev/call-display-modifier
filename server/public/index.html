@@ -18,9 +18,22 @@
             
             <!-- Server Info -->
             <div id="serverInfo" class="server-info" style="display:none;">
-                <h3>📱 Для подключения с телефона используйте:</h3>
-                <div id="serverUrls"></div>
-                <p class="hint">Скопируйте адрес и введите в приложении</p>
+                <h3>📱 Для подключения с телефона:</h3>
+                
+                <!-- QR Code -->
+                <div class="qr-section">
+                    <div class="qr-code-container">
+                        <img id="qrCode" alt="QR Code" style="display:none;" />
+                        <div id="qrLoading" class="qr-loading">Генерация QR кода...</div>
+                    </div>
+                    <p class="qr-hint">📷 Отсканируйте QR код камерой телефона</p>
+                </div>
+                
+                <!-- URLs -->
+                <div class="urls-section">
+                    <h4>Или скопируйте URL вручную:</h4>
+                    <div id="serverUrls"></div>
+                </div>
             </div>
         </header>
 
