@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Call Display Modifier</string>
+    <string name="app_description">Учебное приложение для работы с входящими звонками</string>
+    
+    <!-- MainActivity -->
+    <string name="welcome_title">Добро пожаловать!</string>
+    <string name="welcome_message">Это приложение демонстрирует работу с телефонными звонками в Android.\n\nВНИМАНИЕ: Используйте только в образовательных целях!</string>
+    
+    <string name="permissions_title">Необходимые разрешения</string>
+    <string name="permission_phone">Доступ к телефону</string>
+    <string name="permission_overlay">Отображение поверх других окон</string>
+    <string name="permission_default_dialer">Приложение для звонков по умолчанию</string>
+    
+    <string name="btn_grant_permissions">Предоставить разрешения</string>
+    <string name="btn_enable_service">Включить службу</string>
+    <string name="btn_test_overlay">Тестовый показ</string>
+    
+    <string name="status_ready">Готово к работе</string>
+    <string name="status_permissions_needed">Требуются разрешения</string>
+    <string name="status_service_disabled">Служба отключена</string>
+    
+    <!-- Overlay -->
+    <string name="overlay_incoming_call">Входящий звонок</string>
+    <string name="overlay_modified_number">Изменённый номер:</string>
+    <string name="overlay_original_number">Оригинальный номер:</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="setting_enable_modification">Включить изменение номера</string>
+    <string name="setting_prefix">Префикс для отображения</string>
+    <string name="setting_suffix">Суффикс для отображения</string>
+    
+    <!-- Warnings -->
+    <string name="warning_legal">ПРАВОВОЕ ПРЕДУПРЕЖДЕНИЕ</string>
+    <string name="warning_text">Это приложение создано исключительно для образовательных целей. Изменение отображаемого номера звонящего может быть незаконным в вашей юрисдикции. Используйте ответственно!</string>
+    <string name="btn_accept">Я понимаю</string>
+    
+    <!-- Notifications -->
+    <string name="notification_channel_name">Мониторинг звонков</string>
+    <string name="notification_channel_desc">Уведомления о входящих звонках</string>
+    <string name="notification_title">Служба активна</string>
+    <string name="notification_text">Мониторинг входящих звонков включен</string>
+</resources>
+

@@ -1,0 +1,265 @@
+═══════════════════════════════════════════════════════════════════
+  CALL DISPLAY MODIFIER - Структура проекта
+═══════════════════════════════════════════════════════════════════
+
+📁 podmena/                                    [Корневая директория]
+│
+├─ 📚 ДОКУМЕНТАЦИЯ
+│  ├─ README.md                                [Общее описание проекта]
+│  ├─ QUICK_START.md                           [Быстрый старт - начните с этого!]
+│  ├─ COURSEWORK_INFO.md                       [Информация для курсовой]
+│  ├─ TECHNICAL_DETAILS.md                     [Технические детали]
+│  ├─ INSTALLATION.md                          [Подробная установка]
+│  └─ PROJECT_STRUCTURE.txt                    [Этот файл]
+│
+├─ 🔧 GRADLE КОНФИГУРАЦИЯ
+│  ├─ build.gradle                             [Основная конфигурация Gradle]
+│  ├─ settings.gradle                          [Настройки проекта]
+│  ├─ gradle.properties                        [Свойства Gradle]
+│  ├─ local.properties.example                 [Пример local.properties]
+│  ├─ gradlew.bat                              [Gradle wrapper для Windows]
+│  └─ gradle/
+│     └─ wrapper/
+│        └─ gradle-wrapper.properties          [Версия Gradle]
+│
+├─ 🚀 СКРИПТЫ СБОРКИ
+│  ├─ build-apk.ps1                            [Автосборка для Windows]
+│  └─ build-apk.sh                             [Автосборка для Linux/Mac]
+│
+└─ 📱 app/                                     [Модуль приложения]
+   │
+   ├─ build.gradle                             [Конфигурация модуля]
+   ├─ proguard-rules.pro                       [Правила ProGuard]
+   │
+   └─ src/main/                                [Исходный код]
+      │
+      ├─ 📄 AndroidManifest.xml                [Манифест приложения]
+      │                                        ├─ Permissions
+      │                                        ├─ Activities
+      │                                        └─ Services
+      │
+      ├─ ☕ java/com/calldisplaymodifier/app/  [Java исходники]
+      │  │
+      │  ├─ MainActivity.java                  [Главная активность]
+      │  │  ├─ UI управление
+      │  │  ├─ Проверка разрешений
+      │  │  ├─ Настройки приложения
+      │  │  └─ Тестовый режим
+      │  │
+      │  ├─ CallMonitorService.java            [InCallService - мониторинг звонков]
+      │  │  ├─ Обработка входящих звонков
+      │  │  ├─ Извлечение номера телефона
+      │  │  ├─ Call state callbacks
+      │  │  └─ Foreground service
+      │  │
+      │  └─ OverlayService.java                [Сервис отображения overlay]
+      │     ├─ WindowManager управление
+      │     ├─ Создание/удаление overlay
+      │     ├─ Отображение модифицированного номера
+      │     └─ Lifecycle управление
+      │
+      └─ 🎨 res/                               [Ресурсы приложения]
+         │
+         ├─ 📐 layout/                         [XML layouts]
+         │  ├─ activity_main.xml               [UI главного экрана]
+         │  │  ├─ Status section
+         │  │  ├─ Permissions section
+         │  │  ├─ Settings section
+         │  │  └─ Test section
+         │  │
+         │  └─ overlay_call_info.xml           [UI overlay для звонков]
+         │     ├─ Header с иконкой
+         │     ├─ Модифицированный номер
+         │     ├─ Оригинальный номер
+         │     └─ Info footer
+         │
+         ├─ 🎨 drawable/                       [Векторные изображения]
+         │  └─ ic_launcher_foreground.xml      [Иконка приложения]
+         │
+         ├─ 🖼️ mipmap-*/                       [Иконки (все разрешения)]
+         │  ├─ hdpi/                           [High DPI]
+         │  ├─ mdpi/                           [Medium DPI]
+         │  ├─ xhdpi/                          [Extra High DPI]
+         │  ├─ xxhdpi/                         [XX High DPI]
+         │  ├─ xxxhdpi/                        [XXX High DPI]
+         │  └─ anydpi-v26/                     [Adaptive icons]
+         │
+         └─ 📝 values/                         [Строки, цвета, темы]
+            ├─ strings.xml                     [Текстовые ресурсы]
+            │  ├─ App strings
+            │  ├─ UI labels
+            │  ├─ Warnings
+            │  └─ Notifications
+            │
+            ├─ colors.xml                      [Цветовая палитра]
+            │  ├─ Primary colors
+            │  ├─ Accent colors
+            │  └─ Utility colors
+            │
+            ├─ themes.xml                      [Темы приложения]
+            │  └─ Material Design theme
+            │
+            └─ ic_launcher_background.xml      [Цвет фона иконки]
+
+═══════════════════════════════════════════════════════════════════
+  КЛЮЧЕВЫЕ ФАЙЛЫ ДЛЯ ИЗУЧЕНИЯ
+═══════════════════════════════════════════════════════════════════
+
+1️⃣  НАЧНИТЕ С:
+    📄 QUICK_START.md                          [Быстрая инструкция]
+    📄 README.md                               [Общее описание]
+
+2️⃣  ИЗУЧИТЕ КОД:
+    ☕ MainActivity.java                       [Главный UI]
+    ☕ CallMonitorService.java                 [Логика мониторинга]
+    ☕ OverlayService.java                     [Логика overlay]
+
+3️⃣  ПОСМОТРИТЕ UI:
+    📐 activity_main.xml                       [Дизайн главного экрана]
+    📐 overlay_call_info.xml                   [Дизайн overlay]
+
+4️⃣  КОНФИГУРАЦИЯ:
+    📄 AndroidManifest.xml                     [Настройки приложения]
+    📄 app/build.gradle                        [Зависимости и версии]
+
+5️⃣  ДЛЯ ЗАЩИТЫ КУРСОВОЙ:
+    📄 COURSEWORK_INFO.md                      [Все для защиты]
+    📄 TECHNICAL_DETAILS.md                    [Технические детали]
+
+═══════════════════════════════════════════════════════════════════
+  ОСНОВНЫЕ КОМПОНЕНТЫ
+═══════════════════════════════════════════════════════════════════
+
+🎯 MainActivity
+   • Главный экран приложения
+   • Управление разрешениями
+   • Настройки префикса/суффикса
+   • Тестовый режим
+
+📞 CallMonitorService (InCallService)
+   • Мониторинг входящих звонков
+   • Извлечение номера телефона
+   • Управление overlay сервисом
+   • Foreground service с уведомлением
+
+🪟 OverlayService
+   • Создание overlay через WindowManager
+   • Отображение модифицированной информации
+   • Управление жизненным циклом overlay
+   • Автоскрытие после завершения звонка
+
+═══════════════════════════════════════════════════════════════════
+  ТЕХНОЛОГИЧЕСКИЙ СТЕК
+═══════════════════════════════════════════════════════════════════
+
+Язык:               Java 8+
+Build System:       Gradle 8.0
+Min SDK:            23 (Android 6.0 Marshmallow)
+Target SDK:         34 (Android 14)
+UI Framework:       Material Design Components
+
+Основные API:
+  • InCallService API       [Мониторинг звонков]
+  • WindowManager API       [Overlay windows]
+  • TelecomManager API      [Телефония]
+  • Runtime Permissions     [Разрешения]
+  • Foreground Services     [Фоновая работа]
+
+Библиотеки:
+  • androidx.appcompat:1.6.1
+  • material:1.9.0
+  • constraintlayout:2.1.4
+  • androidx.core:1.12.0
+
+═══════════════════════════════════════════════════════════════════
+  СБОРКА ПРОЕКТА
+═══════════════════════════════════════════════════════════════════
+
+Windows PowerShell:
+  > .\build-apk.ps1
+
+Linux/Mac:
+  $ chmod +x build-apk.sh
+  $ ./build-apk.sh
+
+Вручную:
+  Windows:  gradlew.bat clean assembleDebug
+  Linux:    ./gradlew clean assembleDebug
+
+Результат:
+  📱 app/build/outputs/apk/debug/app-debug.apk
+
+═══════════════════════════════════════════════════════════════════
+  ФАЙЛЫ ДОКУМЕНТАЦИИ
+═══════════════════════════════════════════════════════════════════
+
+README.md              • Общее описание проекта
+                       • Функциональность
+                       • Основные возможности
+                       • Предупреждения
+
+QUICK_START.md         • Быстрый старт (начните здесь!)
+                       • Установка зависимостей
+                       • Сборка за 5 минут
+                       • Чек-лист перед защитой
+
+COURSEWORK_INFO.md     • Полная информация для курсовой
+                       • Описание компонентов
+                       • Использованные технологии
+                       • Ответы на вопросы
+                       • Демонстрация знаний
+
+TECHNICAL_DETAILS.md   • Архитектура приложения
+                       • Android API детали
+                       • Best practices
+                       • Совместимость
+                       • Performance tips
+
+INSTALLATION.md        • Подробная установка
+                       • Установка Java
+                       • Установка Android SDK
+                       • Настройка проекта
+                       • Troubleshooting
+
+PROJECT_STRUCTURE.txt  • Этот файл
+                       • Структура проекта
+                       • Навигация по файлам
+
+═══════════════════════════════════════════════════════════════════
+  ВАЖНЫЕ ЗАМЕЧАНИЯ
+═══════════════════════════════════════════════════════════════════
+
+⚠️  ТРЕБУЕТСЯ ДЛЯ СБОРКИ:
+    ✓ Java JDK 8+ (рекомендуется JDK 17)
+    ✓ Android SDK (API 23-34)
+    ✓ Файл local.properties с путем к SDK
+
+⚠️  ОБРАЗОВАТЕЛЬНЫЕ ЦЕЛИ:
+    • Проект создан для изучения Android разработки
+    • Не использовать для мошенничества
+    • Соблюдать законы о защите данных
+
+⚠️  СОВМЕСТИМОСТЬ:
+    • Работает на Android 6.0+
+    • Некоторые производители имеют ограничения
+    • Требуется отключение battery optimization
+
+═══════════════════════════════════════════════════════════════════
+  СТАТИСТИКА ПРОЕКТА
+═══════════════════════════════════════════════════════════════════
+
+Java классы:           3 основных
+XML layouts:           2 файла
+Resource файлы:        4 файла (strings, colors, themes)
+Строк кода:            ~1000+
+Строк документации:    ~2000+
+Поддержка Android:     API 23-34 (6.0-14)
+
+═══════════════════════════════════════════════════════════════════
+
+📧 Дополнительная информация в документации
+🎓 Готово к защите курсовой работы!
+✅ Все компоненты протестированы
+
+═══════════════════════════════════════════════════════════════════
+
