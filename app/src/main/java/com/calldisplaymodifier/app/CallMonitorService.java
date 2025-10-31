@@ -90,18 +90,70 @@ public class CallMonitorService extends InCallService {
         }
     }
     
-    private void showOverlay(String phoneNumber) {
-        SharedPreferences preferences = getSharedPreferences("AppSettings", MODE_PRIVATE);
+    private void showOverlay(final String phoneNumber) {
+        final SharedPreferences preferences = getSharedPreferences("AppSettings", MODE_PRIVATE);
         
         if (!preferences.getBoolean("modification_enabled", true)) {
             return;
         }
         
+        // Проверяем, включен ли удаленный режим
+        boolean remoteMode = preferences.getBoolean("remote_mode_enabled", false);
+        
+        if (remoteMode) {
+            // Используем правила с сервера
+            ApiClient apiClient = new ApiClient(this);
+            apiClient.getRuleForNumber(phoneNumber, new ApiClient.ApiCallback<ApiClient.RuleCheckResponse>() {
+                @Override
+                public void onSuccess(ApiClient.RuleCheckResponse result) {
+                    if (result.found) {
+                        // Найдено правило на сервере
+                        Log.d(TAG, "Правило найдено на сервере: " + phoneNumber + " -> " + result.display_number);
+                        showOverlayWithNumber(phoneNumber, result.display_number, result.description);
+                    } else {
+                        // Правило не найдено, используем локальные настройки
+                        Log.d(TAG, "Правило не найдено на сервере, используем локальные настройки");
+                        showOverlayLocal(phoneNumber, preferences);
+                    }
+                }
+                
+                @Override
+                public void onFailure(String error) {
+                    // Ошибка подключения к серверу, используем локальные настройки
+                    Log.e(TAG, "Ошибка подключения к серверу: " + error);
+                    showOverlayLocal(phoneNumber, preferences);
+                }
+            });
+        } else {
+            // Используем локальные настройки
+            showOverlayLocal(phoneNumber, preferences);
+        }
+    }
+    
+    private void showOverlayLocal(String phoneNumber, SharedPreferences preferences) {
+        String prefix = preferences.getString("prefix", "[Изменено] ");
+        String suffix = preferences.getString("suffix", "");
+        String modifiedNumber = prefix + phoneNumber + suffix;
+        
         Intent intent = new Intent(this, OverlayService.class);
         intent.setAction("SHOW_OVERLAY");
         intent.putExtra("phone_number", phoneNumber);
-        intent.putExtra("prefix", preferences.getString("prefix", "[Изменено] "));
-        intent.putExtra("suffix", preferences.getString("suffix", ""));
+        intent.putExtra("modified_number", modifiedNumber);
+        intent.putExtra("description", "Локальное правило");
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent);
+        } else {
+            startService(intent);
+        }
+    }
+    
+    private void showOverlayWithNumber(String originalNumber, String displayNumber, String description) {
+        Intent intent = new Intent(this, OverlayService.class);
+        intent.setAction("SHOW_OVERLAY");
+        intent.putExtra("phone_number", originalNumber);
+        intent.putExtra("modified_number", displayNumber);
+        intent.putExtra("description", description != null ? description : "Правило с сервера");
         
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent);

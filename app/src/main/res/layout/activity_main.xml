@@ -167,6 +167,111 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- Remote Control Section -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="#F0F8FF">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🌐 Удаленное управление"
+                    android:textStyle="bold"
+                    android:textSize="16sp"
+                    android:textColor="@color/primary"
+                    android:layout_marginBottom="8dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Подключитесь к админ-панели для удаленного управления правилами"
+                    android:textSize="12sp"
+                    android:textColor="#666666"
+                    android:layout_marginBottom="12dp"/>
+
+                <CheckBox
+                    android:id="@+id/remoteModeCheckBox"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Включить удаленный режим"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="12dp"/>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="URL сервера:"
+                    android:textSize="14sp"
+                    android:layout_marginTop="4dp"/>
+
+                <EditText
+                    android:id="@+id/serverUrlEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="http://192.168.1.100:3000"
+                    android:inputType="textUri"
+                    android:text="http://192.168.1.100:3000"
+                    android:layout_marginBottom="12dp"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:weightSum="2">
+
+                    <Button
+                        android:id="@+id/registerButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginEnd="4dp"
+                        android:text="📱 Регистрация"
+                        android:textSize="12sp"
+                        android:backgroundTint="@color/primary"/>
+
+                    <Button
+                        android:id="@+id/syncButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="4dp"
+                        android:text="🔄 Синхронизация"
+                        android:textSize="12sp"
+                        android:backgroundTint="@color/accent"/>
+
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/testConnectionButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="🔌 Проверить подключение"
+                    android:textSize="12sp"
+                    android:backgroundTint="#4CAF50"/>
+
+                <TextView
+                    android:id="@+id/connectionStatusText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Статус: не подключено"
+                    android:textSize="12sp"
+                    android:textColor="#999999"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center"/>
+
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Test Section -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

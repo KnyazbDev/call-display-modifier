@@ -53,10 +53,10 @@ public class OverlayService extends Service {
         
         if ("SHOW_OVERLAY".equals(action) || "TEST_OVERLAY".equals(action)) {
             String phoneNumber = intent.getStringExtra("phone_number");
-            String prefix = intent.getStringExtra("prefix");
-            String suffix = intent.getStringExtra("suffix");
+            String modifiedNumber = intent.getStringExtra("modified_number");
+            String description = intent.getStringExtra("description");
             
-            showOverlay(phoneNumber, prefix, suffix);
+            showOverlay(phoneNumber, modifiedNumber, description);
             
             // Для тестового режима автоматически скрываем через 5 секунд
             if ("TEST_OVERLAY".equals(action)) {
@@ -69,7 +69,7 @@ public class OverlayService extends Service {
         return START_NOT_STICKY;
     }
     
-    private void showOverlay(String phoneNumber, String prefix, String suffix) {
+    private void showOverlay(String phoneNumber, String modifiedNumber, String description) {
         if (isOverlayShowing) {
             hideOverlay();
         }
@@ -101,20 +101,23 @@ public class OverlayService extends Service {
             // Заполняем данные
             TextView modifiedNumberText = overlayView.findViewById(R.id.modifiedNumberText);
             TextView originalNumberText = overlayView.findViewById(R.id.originalNumberText);
+            TextView descriptionText = overlayView.findViewById(R.id.descriptionText);
             
-            if (prefix == null) prefix = "[Изменено] ";
-            if (suffix == null) suffix = "";
-            
-            String modifiedNumber = prefix + phoneNumber + suffix;
-            
-            modifiedNumberText.setText(modifiedNumber);
+            modifiedNumberText.setText(modifiedNumber != null ? modifiedNumber : phoneNumber);
             originalNumberText.setText("Оригинал: " + phoneNumber);
+            
+            if (description != null && !description.isEmpty()) {
+                descriptionText.setText("📝 " + description);
+                descriptionText.setVisibility(View.VISIBLE);
+            } else {
+                descriptionText.setVisibility(View.GONE);
+            }
             
             // Добавляем view в window manager
             windowManager.addView(overlayView, params);
             isOverlayShowing = true;
             
-            Log.d(TAG, "Overlay отображен для номера: " + phoneNumber);
+            Log.d(TAG, "Overlay отображен: " + phoneNumber + " -> " + modifiedNumber);
             
         } catch (Exception e) {
             Log.e(TAG, "Ошибка при отображении overlay", e);

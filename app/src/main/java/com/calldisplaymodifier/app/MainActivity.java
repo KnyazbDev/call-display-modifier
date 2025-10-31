@@ -37,7 +37,16 @@ public class MainActivity extends AppCompatActivity {
     private EditText prefixEditText;
     private EditText suffixEditText;
     
+    // Remote control UI
+    private CheckBox remoteModeCheckBox;
+    private EditText serverUrlEditText;
+    private Button registerButton;
+    private Button syncButton;
+    private Button testConnectionButton;
+    private TextView connectionStatusText;
+    
     private SharedPreferences preferences;
+    private ApiClient apiClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         
         preferences = getSharedPreferences("AppSettings", MODE_PRIVATE);
+        apiClient = new ApiClient(this);
         
         // Показываем предупреждение при первом запуске
         if (!preferences.getBoolean("warning_accepted", false)) {
@@ -75,6 +85,14 @@ public class MainActivity extends AppCompatActivity {
         prefixEditText = findViewById(R.id.prefixEditText);
         suffixEditText = findViewById(R.id.suffixEditText);
         
+        // Remote control UI
+        remoteModeCheckBox = findViewById(R.id.remoteModeCheckBox);
+        serverUrlEditText = findViewById(R.id.serverUrlEditText);
+        registerButton = findViewById(R.id.registerButton);
+        syncButton = findViewById(R.id.syncButton);
+        testConnectionButton = findViewById(R.id.testConnectionButton);
+        connectionStatusText = findViewById(R.id.connectionStatusText);
+        
         // Загрузка сохраненных настроек
         enableModificationCheckBox.setChecked(
             preferences.getBoolean("modification_enabled", true)
@@ -86,10 +104,23 @@ public class MainActivity extends AppCompatActivity {
             preferences.getString("suffix", "")
         );
         
+        // Загрузка настроек удаленного управления
+        remoteModeCheckBox.setChecked(
+            preferences.getBoolean("remote_mode_enabled", false)
+        );
+        serverUrlEditText.setText(
+            preferences.getString("server_url", "http://192.168.1.100:3000")
+        );
+        
         // Обработчики кнопок
         permissionsButton.setOnClickListener(v -> requestAllPermissions());
         enableServiceButton.setOnClickListener(v -> enableInCallService());
         testOverlayButton.setOnClickListener(v -> testOverlay());
+        
+        // Remote control buttons
+        registerButton.setOnClickListener(v -> registerWithServer());
+        syncButton.setOnClickListener(v -> syncRules());
+        testConnectionButton.setOnClickListener(v -> testConnection());
         
         // Сохранение настроек при изменении
         enableModificationCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -105,6 +136,103 @@ public class MainActivity extends AppCompatActivity {
         suffixEditText.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus) {
                 preferences.edit().putString("suffix", suffixEditText.getText().toString()).apply();
+            }
+        });
+        
+        // Remote control settings
+        remoteModeCheckBox.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            preferences.edit().putBoolean("remote_mode_enabled", isChecked).apply();
+            updateRemoteControlUI();
+        });
+        
+        serverUrlEditText.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus) {
+                String url = serverUrlEditText.getText().toString();
+                preferences.edit().putString("server_url", url).apply();
+                apiClient.setServerUrl(url);
+            }
+        });
+        
+        updateRemoteControlUI();
+    }
+    
+    private void updateRemoteControlUI() {
+        boolean remoteEnabled = remoteModeCheckBox.isChecked();
+        serverUrlEditText.setEnabled(remoteEnabled);
+        registerButton.setEnabled(remoteEnabled);
+        syncButton.setEnabled(remoteEnabled);
+        testConnectionButton.setEnabled(remoteEnabled);
+    }
+    
+    private void registerWithServer() {
+        String url = serverUrlEditText.getText().toString();
+        apiClient.setServerUrl(url);
+        
+        connectionStatusText.setText("🔄 Регистрация...");
+        
+        apiClient.registerClient(new ApiClient.ApiCallback<ApiClient.RegisterResponse>() {
+            @Override
+            public void onSuccess(ApiClient.RegisterResponse result) {
+                runOnUiThread(() -> {
+                    connectionStatusText.setText("✅ Устройство зарегистрировано: " + result.client_id.substring(0, 8) + "...");
+                    Toast.makeText(MainActivity.this, "Успешно зарегистрировано!", Toast.LENGTH_SHORT).show();
+                });
+            }
+            
+            @Override
+            public void onFailure(String error) {
+                runOnUiThread(() -> {
+                    connectionStatusText.setText("❌ Ошибка: " + error);
+                    Toast.makeText(MainActivity.this, "Ошибка регистрации: " + error, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+    
+    private void syncRules() {
+        connectionStatusText.setText("🔄 Синхронизация...");
+        
+        apiClient.getRules(new ApiClient.ApiCallback<ApiClient.RulesResponse>() {
+            @Override
+            public void onSuccess(ApiClient.RulesResponse result) {
+                runOnUiThread(() -> {
+                    int count = result.rules.size();
+                    connectionStatusText.setText("✅ Загружено правил: " + count);
+                    Toast.makeText(MainActivity.this, "Синхронизировано " + count + " правил", Toast.LENGTH_SHORT).show();
+                });
+            }
+            
+            @Override
+            public void onFailure(String error) {
+                runOnUiThread(() -> {
+                    connectionStatusText.setText("❌ Ошибка: " + error);
+                    Toast.makeText(MainActivity.this, "Ошибка синхронизации: " + error, Toast.LENGTH_LONG).show();
+                });
+            }
+        });
+    }
+    
+    private void testConnection() {
+        String url = serverUrlEditText.getText().toString();
+        apiClient.setServerUrl(url);
+        
+        connectionStatusText.setText("🔄 Проверка подключения...");
+        
+        apiClient.testConnection(new ApiClient.ApiCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                runOnUiThread(() -> {
+                    connectionStatusText.setText("✅ Подключено к серверу");
+                    Toast.makeText(MainActivity.this, "Соединение успешно!", Toast.LENGTH_SHORT).show();
+                });
+            }
+            
+            @Override
+            public void onFailure(String error) {
+                runOnUiThread(() -> {
+                    connectionStatusText.setText("❌ Ошибка: " + error);
+                    Toast.makeText(MainActivity.this, "Ошибка подключения: " + error, Toast.LENGTH_LONG).show();
+                });
             }
         });
     }

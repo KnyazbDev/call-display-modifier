@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Call Display Modifier</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📱 Call Display Modifier</h1>
+            <p class="subtitle">Админ-панель удаленного управления</p>
+            <div class="warning">
+                ⚠️ Только для образовательных целей!
+            </div>
+        </header>
+
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalClients">0</div>
+                <div class="stat-label">Всего клиентов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeClients">0</div>
+                <div class="stat-label">Активных (1ч)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalRules">0</div>
+                <div class="stat-label">Активных правил</div>
+            </div>
+        </div>
+
+        <!-- Clients List -->
+        <div class="section">
+            <div class="section-header">
+                <h2>👥 Клиенты</h2>
+                <button class="btn btn-primary" onclick="loadClients()">🔄 Обновить</button>
+            </div>
+
+            <div id="clientsList" class="clients-list">
+                <div class="loading">Загрузка...</div>
+            </div>
+        </div>
+
+        <!-- Client Details Modal -->
+        <div id="clientModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="modalTitle">Управление клиентом</h2>
+                    <button class="close-btn" onclick="closeModal()">&times;</button>
+                </div>
+                
+                <div class="modal-body">
+                    <!-- Client Info -->
+                    <div class="client-info" id="clientInfo">
+                        <!-- Заполняется динамически -->
+                    </div>
+
+                    <!-- Rules Section -->
+                    <div class="rules-section">
+                        <h3>📋 Правила замены номеров</h3>
+                        
+                        <!-- Add New Rule Form -->
+                        <div class="add-rule-form">
+                            <h4>Добавить новое правило</h4>
+                            <div class="form-group">
+                                <label>Оригинальный номер (с которого звонят):</label>
+                                <input type="text" id="originalNumber" placeholder="+1234567890" />
+                            </div>
+                            <div class="form-group">
+                                <label>Отображаемый номер (что покажется клиенту):</label>
+                                <input type="text" id="displayNumber" placeholder="+0987654321" />
+                            </div>
+                            <div class="form-group">
+                                <label>Описание (опционально):</label>
+                                <input type="text" id="description" placeholder="Офис, Директор, и т.д." />
+                            </div>
+                            <button class="btn btn-success" onclick="addRule()">➕ Добавить правило</button>
+                        </div>
+
+                        <!-- Rules List -->
+                        <div class="rules-list" id="rulesList">
+                            <!-- Заполняется динамически -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger" onclick="deleteClient()">🗑️ Удалить клиента</button>
+                    <button class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
